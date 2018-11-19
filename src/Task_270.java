@@ -1,49 +1,56 @@
-import javax.xml.stream.events.Characters;
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Task_270 {
 	public static void main(String[] args) {
-		VariableName test = new VariableName();
-		try(Formatter output = new Formatter("OUTPUT.TXT")) {
-			output.format(test.toString());
-		}catch (FileNotFoundException | FormatterClosedException e) {
+		final String outputPath = "OUTPUT.TXT";
+		final VariableName test = new VariableName();
+		try(final BufferedWriter output = Files.newBufferedWriter(Paths.get(outputPath))) {
+			output.write(test.toString());
+		}catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 }
 
-class VariableName {
+//-----------------------------------------------------------------------------
+/*public*/ class VariableName {
+	//-----------------------------------------------------------------------------fields
 	private String name;
+	//-----------------------------------------------------------------------------constructors
 	/*public*/ private VariableName(final String path)
 	{
-
-		try(final Scanner input = new Scanner(Paths.get(path))) {
+		final int cPlusPlusString = 0;
+		final int javaString = 1;
+		try(final BufferedReader input = Files.newBufferedReader(Paths.get(path))) {
 			//-----------------------------------------------------------------------------
-			if(input.hasNext()) {
-				String nameFromFile = input.nextLine();
-				int test = this.whatsString(nameFromFile);
-				if(test == 0) {
+			if(input.ready()) {
+				//-----------------------------------------------------------------------------
+				final String nameFromFile = input.readLine();  //read data from file
+				//-----------------------------------------------------------------------------
+				final int whatsString = this.whatsString(nameFromFile);
+				if(cPlusPlusString == whatsString) {
 					this.name = this.toJava(nameFromFile);
 				}
-				else if(test == 1) {
+				else if(javaString == whatsString) {
 					this.name = this.toCPlusPlus(nameFromFile);
 				}
 				else {
 					this.name = "Error!";
 				}
+				//-----------------------------------------------------------------------------
 			}
 			//-----------------------------------------------------------------------------
 			else {
 				throw new IOException("File is empty!");
 			}
-
 			//-----------------------------------------------------------------------------
-		} catch (IOException | NoSuchElementException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -52,81 +59,95 @@ class VariableName {
 	{
 		this("INPUT.TXT");
 	}
-
-	private int whatsString(String s)
+	//-----------------------------------------------------------------------------methods for constructors
+	private int whatsString(final String s)
 	{
+		final int cPlusPlusString = 0;
+		final int javaString = 1;
+		final int errorString = -1;
+		//-----------------------------------------------------------------------------
 		if(s.contains("_")) {
+			//-----------------------------------------------------------------------------
 			Pattern expression = Pattern.compile("__+|\\p{javaUpperCase}");
 			Matcher matcher = expression.matcher(s);
 			if((s.charAt(0) == '_') || (s.charAt(s.length() - 1) == '_') || matcher.find()) {
-				return -1;
+				return errorString;
 			}
+			//-----------------------------------------------------------------------------
 			else {
-				return 0;
+				return cPlusPlusString;
 			}
 		}
+		//-----------------------------------------------------------------------------
 		else {
 			if(Character.isUpperCase(s.charAt(0))) {
-				return -1;
+				return errorString;
 			}
 			else {
-				return 1;
+				return javaString;
 			}
 		}
+		//-----------------------------------------------------------------------------
 	}
 
-	private String toCPlusPlus(String s) {
-		String[] sArr = s.split("\\p{javaUpperCase}+");
-		String[] sArr2 = s.split("\\p{javaLowerCase}+");
-
-		if(sArr2.length == 0) {
-			return s;
+	private String toCPlusPlus(final String oldName) {
+		final String[] lowerCaseStrings = oldName.split("\\p{javaUpperCase}+");
+		final String[] upperCaseStrings = oldName.split("\\p{javaLowerCase}+");
+		if(upperCaseStrings.length == 0) {
+			return oldName;
 		}
-
-		StringBuilder stringBuilder = new StringBuilder();
-		for(int i = 0; i < sArr2.length; i++) {
-			if(sArr2[i].length() == 1) {
-				stringBuilder.append(sArr2[i].toLowerCase());
-				if(i < sArr.length) {
-					stringBuilder.append(sArr[i]);
+		//-----------------------------------------------------------------------------
+		StringBuilder convertedName = new StringBuilder();
+		for(int i = 0; i < upperCaseStrings.length; i++) {
+			//-----------------------------------------------------------------------------
+			if(upperCaseStrings[i].length() == 1) {
+				convertedName.append(upperCaseStrings[i].toLowerCase());
+				if(i < lowerCaseStrings.length) { //newRGB - example
+					convertedName.append(lowerCaseStrings[i]);
 				}
 			}
-			else {
-				String tempString = sArr2[i].toLowerCase();
+			//-----------------------------------------------------------------------------
+			else { //newRGBString - example
+				//-----------------------------------------------------------------------------
+				String tempString = upperCaseStrings[i].toLowerCase();
 				for(int j = 0; j < tempString.length(); j++) {
-					stringBuilder.append(tempString.charAt(j));
+					//-----------------------------------------------------------------------------
+					convertedName.append(tempString.charAt(j));
 					if(j != tempString.length() - 1) {
-						stringBuilder.append('_');
+						convertedName.append('_');
 					}
+					//-----------------------------------------------------------------------------
 				}
-				if(i < sArr.length) {
-					stringBuilder.append(sArr[i]);
+				//-----------------------------------------------------------------------------
+				if(i < lowerCaseStrings.length) {
+					convertedName.append(lowerCaseStrings[i]);
 				}
 			}
-
-
-			stringBuilder.append('_');
+			convertedName.append('_');
 		}
-		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-
-		return  stringBuilder.toString();
+		convertedName.deleteCharAt(convertedName.length() - 1);
+		return  convertedName.toString();
 	}
 
-	private String toJava(String s) {
-		String[] sArr = s.split("_");
-		StringBuilder stringBuilder = new StringBuilder();
-		for(String tempString : sArr) {
+	private String toJava(final String oldName) {
+		final String[] nameSubStrings = oldName.split("_");
+		//-----------------------------------------------------------------------------
+		StringBuilder convertedName = new StringBuilder();
+		for(String tempString : nameSubStrings) {
+			//-----------------------------------------------------------------------------
 			StringBuilder tempStringBuilder = new StringBuilder(tempString);
-			Character ch = Character.toUpperCase(tempString.charAt(0));
-			tempStringBuilder.replace(0, 1, ch.toString());
-			stringBuilder.append(tempStringBuilder);
+			char firstSymbol = Character.toUpperCase(tempString.charAt(0));
+			//-----------------------------------------------------------------------------
+			tempStringBuilder.replace(0, 1, String.valueOf(firstSymbol));
+			convertedName.append(tempStringBuilder);
+			//-----------------------------------------------------------------------------
 		}
-		Character ch = Character.toLowerCase(stringBuilder.charAt(0));
-		stringBuilder.replace(0, 1, ch.toString());
-
-		return stringBuilder.toString();
+		char firstSymbol = Character.toLowerCase(convertedName.charAt(0));
+		convertedName.replace(0, 1, String.valueOf(firstSymbol));
+		return convertedName.toString();
 	}
-
+	//-----------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------methods
 	@Override
 	public String toString()
 	{
